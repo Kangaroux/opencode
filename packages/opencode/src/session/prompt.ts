@@ -1342,6 +1342,7 @@ export const layer = Layer.effect(
             Effect.provideService(RuntimeFlags.Service, flags),
             Effect.provideService(AppFileSystem.Service, fsys),
             Effect.provideService(Session.Service, sessions),
+            Effect.provideService(Config.Service, config),
           )
 
           const msg: MessageV2.Assistant = {

@@ -2,6 +2,7 @@ import path from "path"
 import { Effect } from "effect"
 import { Agent } from "@/agent/agent"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
+import { Config } from "@/config/config"
 import { InstanceState } from "@/effect/instance-state"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { PartID } from "./schema"
@@ -20,6 +21,24 @@ export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
   const sessions = yield* Session.Service
   const userMessage = input.messages.findLast((msg) => msg.info.role === "user")
   if (!userMessage) return input.messages
+
+  {
+    const cfg = yield* Config.Service
+    const config = yield* cfg.get()
+    if (config.system_reminders) {
+      for (const reminder of config.system_reminders) {
+        const part = yield* sessions.updatePart({
+          id: PartID.ascending(),
+          messageID: userMessage.info.id,
+          sessionID: userMessage.info.sessionID,
+          type: "text",
+          text: `<system-reminder>${reminder}</system-reminder>`,
+          synthetic: true,
+        })
+        userMessage.parts.push(part)
+      }
+    }
+  }
 
   if (!flags.experimentalPlanMode) {
     return input.messages
